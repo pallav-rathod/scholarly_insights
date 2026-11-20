@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Scholarly Insight{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">{% if mode == 'trackers' %}PERSONAL RESEARCH FEED{% elif mode == 'alerts' %}STAY CURRENT{% else %}YOUR RESEARCH SPACE{% endif %}</p>
+  <h1>{{ title }}</h1>
+  <p>{% if mode == 'trackers' %}Follow keywords, authors, and categories. Refresh to check for matching papers.{% elif mode == 'alerts' %}New papers from your trackers appear here as in-app notifications.{% else %}Your saved papers and recently viewed articles, together in one place.{% endif %}</p>
+</section>
+<div class="account-toolbar">
+  <p id="account-message" class="form-message" aria-live="polite">Sign in with Google to see your personal research space.</p>
+  {% if mode == 'trackers' %}
+    <form id="tracker-form" class="tracker-form">
+      <label class="field"><span>Tracker name</span><input name="name" maxlength="80" placeholder="e.g. Vision-language models" required></label>
+      <label class="field"><span>Keywords</span><input name="keywords" placeholder="e.g. multimodal learning"></label>
+      <label class="field"><span>Authors</span><input name="authors" placeholder="Author name"></label>
+      <label class="field"><span>Categories</span><input name="categories" placeholder="e.g. cs.CV"></label>
+      <button class="button button-primary" type="submit">Create tracker +</button>
+    </form>
+  {% endif %}
+</div>
+<div id="account-content" class="account-content" data-mode="{{ mode }}">
+  <div class="empty-state"><span>◎</span><h2>Your research, organized</h2><p>Sign in with Google to manage this space.</p></div>
+</div>
+{% endblock %}

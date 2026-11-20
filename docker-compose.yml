@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    ports:
+      - "${PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      DATABASE_PATH: /app/instance/scholarly_insight.sqlite3
+    volumes:
+      - scholarly-data:/app/instance
+    restart: unless-stopped
+
+volumes:
+  scholarly-data:

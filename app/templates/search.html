@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Search papers · Scholarly Insight{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">DISCOVER</p><h1>Search scholarly work</h1>
+  <p>Combine filters to find papers across arXiv. Every result links back to its source.</p>
+</section>
+<form class="search-panel" action="{{ url_for('main.search_page') }}" method="get">
+  <label class="field field-keyword"><span>Keyword</span><input name="q" value="{{ filters.q }}" placeholder="e.g. graph neural networks"></label>
+  <label class="field"><span>Author</span><input name="author" value="{{ filters.author }}" placeholder="Author name"></label>
+  <label class="field"><span>Category</span><input name="category" value="{{ filters.category }}" placeholder="e.g. cs.LG"></label>
+  <label class="field"><span>From</span><input type="date" name="from_date" value="{{ filters.from_date }}"></label>
+  <label class="field"><span>To</span><input type="date" name="to_date" value="{{ filters.to_date }}"></label>
+  <label class="field"><span>Sort by</span><select name="sort">
+    <option value="newest" {{ 'selected' if filters.sort in ('', 'newest') else '' }}>Newest</option>
+    <option value="relevance" {{ 'selected' if filters.sort == 'relevance' else '' }}>Relevance</option>
+    <option value="updated" {{ 'selected' if filters.sort == 'updated' else '' }}>Recently updated</option>
+  </select></label>
+  <input type="hidden" name="start" value="0">
+  <button class="button button-primary" type="submit">Search papers <span aria-hidden="true">→</span></button>
+</form>
+{% if error %}<div class="notice notice-error" role="alert">{{ error }}</div>{% endif %}
+{% if results %}
+  <div class="results-heading">
+    <div><h2>Results</h2><p>{{ results.total }} matching papers{% if results.stale %} <span class="stale-label">· showing cached results while arXiv is unavailable</span>{% endif %}</p></div>
+    <span class="subtle-note">Showing {{ request.args.get('start', '0')|int + 1 }}–{{ request.args.get('start', '0')|int + results.articles|length }}</span>
+  </div>
+  <div class="article-list">
+    {% for article in results.articles %}
+      <article class="result-card">
+        <div class="result-meta"><span class="category-pill">{{ article.primary_category or (article.categories|first) or 'arXiv' }}</span><span>{{ article.published[:10] }}</span></div>
+        <h3><a href="{{ url_for('main.article_page', arxiv_id=article.arxiv_id) }}">{{ article.title }}</a></h3>
+        <p class="author-line">{{ article.authors|join(', ') }}</p>
+        <p class="abstract-preview">{{ article.abstract }}</p>
+        <div class="result-bottom"><div class="tag-list">{% for category in article.categories[:4] %}<span>{{ category }}</span>{% endfor %}</div><a class="text-link" href="{{ url_for('main.article_page', arxiv_id=article.arxiv_id) }}">View paper →</a></div>
+      </article>
+    {% endfor %}
+  </div>
+  {% set start = request.args.get('start', '0')|int %}
+  {% if start > 0 or results.total > start + results.articles|length %}
+    <div class="pagination">
+      {% if start > 0 %}<a class="button button-outline" href="{{ url_for('main.search_page', q=filters.q, author=filters.author, category=filters.category, from_date=filters.from_date, to_date=filters.to_date, sort=filters.sort, start=[start-20, 0]|max) }}">← Previous</a>{% endif %}
+      {% if results.total > start + results.articles|length %}<a class="button button-outline" href="{{ url_for('main.search_page', q=filters.q, author=filters.author, category=filters.category, from_date=filters.from_date, to_date=filters.to_date, sort=filters.sort, start=start+20) }}">Next page →</a>{% endif %}
+    </div>
+  {% endif %}
+{% elif not error and request.args %}
+  <div class="empty-state"><span>⌕</span><h2>No papers found</h2><p>Try a broader keyword or remove one of the filters.</p></div>
+{% else %}
+  <div class="search-hint"><span class="feature-icon">✳</span><div><h3>Search across arXiv</h3><p>Try a concept, a researcher, or a subject area to get started.</p></div></div>
+{% endif %}
+{% endblock %}

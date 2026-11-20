@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ article.title }} · Scholarly Insight{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('main.search_page') }}">← Back to search</a>
+<div class="article-layout">
+  <article class="article-main">
+    <div class="result-meta"><span class="category-pill">{{ article.primary_category or 'arXiv paper' }}</span><span>Published {{ article.published[:10] }}</span><span>Updated {{ article.updated[:10] }}</span></div>
+    <h1>{{ article.title }}</h1>
+    <p class="article-authors">{{ article.authors|join(', ') }}</p>
+    <div class="tag-list">{% for category in article.categories %}<span>{{ category }}</span>{% endfor %}</div>
+    <div class="article-actions">
+      {% if article.pdf_url %}<a class="button button-primary" href="{{ article.pdf_url }}" target="_blank" rel="noopener">Read PDF ↗</a>{% endif %}
+      <a class="button button-outline" href="{{ article.abs_url }}" target="_blank" rel="noopener">View on arXiv ↗</a>
+      <button class="button button-outline" id="favorite-button" data-article-id="{{ article.arxiv_id }}" type="button">☆ Save paper</button>
+    </div>
+    <section class="article-section"><h2>Abstract</h2><p class="abstract-full">{{ article.abstract }}</p></section>
+    {% if article.journal_ref or article.doi or article.comment %}
+      <section class="article-section"><h2>Additional information</h2>
+        {% if article.journal_ref %}<p><strong>Journal reference:</strong> {{ article.journal_ref }}</p>{% endif %}
+        {% if article.doi %}<p><strong>DOI:</strong> {{ article.doi }}</p>{% endif %}
+        {% if article.comment %}<p><strong>Comments:</strong> {{ article.comment }}</p>{% endif %}
+      </section>
+    {% endif %}
+    <section class="article-section discussion">
+      <p class="eyebrow">COMMUNITY</p><h2>Discussion</h2><p class="subtle-note">Share a thoughtful question or insight about this paper.</p>
+      <form id="comment-form" data-article-id="{{ article.arxiv_id }}">
+        <label class="field"><span>Your comment</span><textarea name="body" rows="4" maxlength="5000" placeholder="What stood out to you?"></textarea></label>
+        <button class="button button-primary" type="submit">Post comment</button>
+      </form>
+      <p class="form-message" id="comment-message" aria-live="polite"></p>
+      <div id="comments-list" class="comments-list" data-article-id="{{ article.arxiv_id }}"><p class="subtle-note">Loading discussion…</p></div>
+    </section>
+  </article>
+  <aside class="article-aside">
+    <div class="aside-card"><p class="eyebrow">PAPER DETAILS</p><h3>At a glance</h3>
+      <dl><dt>arXiv ID</dt><dd>{{ article.arxiv_id }}</dd><dt>Authors</dt><dd>{{ article.authors|length }}</dd><dt>Categories</dt><dd>{{ article.categories|length }}</dd></dl>
+      <a href="{{ article.abs_url }}" target="_blank" rel="noopener" class="text-link">Source on arXiv ↗</a>
+    </div>
+    <div class="aside-card"><p class="eyebrow">KEEP EXPLORING</p><h3>Related papers</h3>
+      {% for related_article in related %}<a class="related-item" href="{{ url_for('main.article_page', arxiv_id=related_article.arxiv_id) }}"><span>{{ related_article.primary_category }}</span><strong>{{ related_article.title }}</strong></a>{% else %}<p class="subtle-note">Search more papers to build a collection for related-paper suggestions.</p>{% endfor %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

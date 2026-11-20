@@ -1,0 +1,10 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+instance/
+firebase-admin.json
+firebase-service-account.json
+.git/
+.pytest_cache/
+tests/

@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Not found · Scholarly Insight{% endblock %}
+{% block content %}
+<section class="empty-state error-state"><span>↗</span><h1>We couldn't find that</h1><p>{{ message }}</p><a class="button button-primary" href="{{ url_for('main.search_page') }}">Search papers</a></section>
+{% endblock %}

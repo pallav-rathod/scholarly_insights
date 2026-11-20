@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Find, follow, and discuss scholarly research from arXiv.">
+  <title>{% block title %}Scholarly Insight{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('main.home') }}"><span class="brand-mark">S</span> Scholarly Insight</a>
+    <nav aria-label="Main navigation">
+      <a class="{{ 'active' if page == 'search' else '' }}" href="{{ url_for('main.search_page') }}">Search</a>
+      <a class="{{ 'active' if page == 'trackers' else '' }}" href="{{ url_for('main.trackers_page') }}">My Trackers</a>
+      <a class="{{ 'active' if page == 'library' else '' }}" href="{{ url_for('main.library_page') }}">My Library</a>
+      <a class="{{ 'active' if page == 'alerts' else '' }}" href="{{ url_for('main.alerts_page') }}">Alerts</a>
+    </nav>
+    <div class="auth-controls">
+      <span id="auth-status" class="auth-status">Not signed in</span>
+      <button id="sign-in-button" class="button button-small button-outline" type="button">Sign in</button>
+      <button id="sign-out-button" class="button button-small button-outline hidden" type="button">Sign out</button>
+    </div>
+  </header>
+  <main class="page-shell">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    <span>Research metadata from <a href="https://arxiv.org/" target="_blank" rel="noopener">arXiv</a>.</span>
+    <span>Every paper links to its source. Citation and readership metrics are not provided.</span>
+  </footer>
+  {% set firebase_config = {
+    'apiKey': config['FIREBASE_WEB_API_KEY'],
+    'authDomain': config['FIREBASE_AUTH_DOMAIN'],
+    'projectId': config['FIREBASE_PROJECT_ID'],
+    'appId': config['FIREBASE_APP_ID']
+  } %}
+  <script>window.SCHOLARLY_FIREBASE_CONFIG = {{ firebase_config|tojson }};</script>
+  {% if config['FIREBASE_WEB_API_KEY'] and config['FIREBASE_PROJECT_ID'] %}
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  {% endif %}
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

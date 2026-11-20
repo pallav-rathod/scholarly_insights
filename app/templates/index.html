@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Discover research · Scholarly Insight{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">YOUR RESEARCH, IN ONE PLACE</p>
+    <h1>Keep up with the work<br>that moves you forward.</h1>
+    <p class="hero-description">Search arXiv, follow the topics and researchers you care about, and make space for better conversations.</p>
+    <a class="button button-primary" href="{{ url_for('main.search_page') }}">Explore papers <span aria-hidden="true">→</span></a>
+  </div>
+  <div class="hero-art" aria-hidden="true">
+    <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+    <div class="paper-card"><span class="paper-label">RECENT RESEARCH</span><i></i><i></i><i class="short-line"></i><b>✳</b></div>
+    <span class="orb orb-a"></span><span class="orb orb-b"></span><span class="orb orb-c"></span>
+  </div>
+</section>
+<section class="section-heading">
+  <div><p class="eyebrow">A BETTER WAY TO FOLLOW IDEAS</p><h2>One workflow for discovery</h2></div>
+  <p>From the first search to the next paper worth reading.</p>
+</section>
+<section class="feature-grid">
+  <a class="feature-card" href="{{ url_for('main.search_page') }}"><span class="feature-icon">⌕</span><h3>Search with context</h3><p>Combine keywords, authors, categories, and dates without hand-writing query syntax.</p><span class="card-link">Browse arXiv →</span></a>
+  <a class="feature-card" href="{{ url_for('main.trackers_page') }}"><span class="feature-icon">◎</span><h3>Track what matters</h3><p>Keep a personal watchlist for the subjects, authors, and questions you follow.</p><span class="card-link">Build a tracker →</span></a>
+  <a class="feature-card" href="{{ url_for('main.library_page') }}"><span class="feature-icon">▤</span><h3>Build your library</h3><p>Save papers and pick up where you left off with a private reading history.</p><span class="card-link">Open your library →</span></a>
+</section>
+<section class="insights-panel">
+  <div class="insights-title"><div><p class="eyebrow">FROM THE LOCAL RESEARCH COLLECTION</p><h2>Research at a glance</h2></div><span class="metric">{{ insights.article_count }} <small>papers cached</small></span></div>
+  {% if insights.article_count %}
+    <div class="insight-columns">
+      <div><h3>Active categories</h3>{% for name, count in insights.top_categories %}<div class="rank-row"><span>{{ name }}</span><span>{{ count }}</span></div>{% else %}<p>No category data yet.</p>{% endfor %}</div>
+      <div><h3>Authors in your collection</h3>{% for name, count in insights.top_authors %}<div class="rank-row"><span>{{ name }}</span><span>{{ count }}</span></div>{% else %}<p>No author data yet.</p>{% endfor %}</div>
+      <div><h3>Monthly paper volume</h3><div class="month-bars">{% for month, count in insights.monthly %}<div class="bar-item" title="{{ month }}: {{ count }}"><span style="height: {{ [count * 8, 100]|min }}%"></span><small>{{ month[5:] }}</small></div>{% else %}<p>Search papers to build this view.</p>{% endfor %}</div></div>
+    </div>
+    <p class="subtle-note">Summaries are calculated from papers searched and cached in this app—not from all arXiv records.</p>
+  {% else %}
+    <p class="empty-note">Search arXiv to start building an at-a-glance view of your research interests.</p>
+    <a class="text-link" href="{{ url_for('main.search_page') }}">Start with a search →</a>
+  {% endif %}
+</section>
+{% endblock %}
