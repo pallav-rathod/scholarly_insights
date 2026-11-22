@@ -116,6 +116,10 @@ class ArxivClient:
             raise ValueError("limit must be between 1 and 50")
         sort_by, sort_order = sort_map[sort]
         normalized.update(sort=sort, start=start, limit=limit)
+        if filters.get("primary_only") and normalized.get("category"):
+            return self._search_primary_category(
+                search_query, normalized, sort_by, sort_order, start, limit, force_refresh
+            )
         cache_key = hashlib.sha256(
             json.dumps(normalized, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()
@@ -161,6 +165,74 @@ class ArxivClient:
         )
         db.commit()
         return {"articles": articles, "total": total, "stale": False}
+
+    PRIMARY_POOL_SIZE = 300
+
+    def _search_primary_category(
+        self, search_query: str, normalized: dict, sort_by: str, sort_order: str,
+        start: int, limit: int, force_refresh: bool,
+    ) -> dict:
+        """Filter arXiv results to papers whose primary category matches.
+
+        arXiv's cat: operator always includes cross-listed papers, so we fetch
+        a pool of results and keep only primary-category matches locally.
+        Pagination runs over the filtered id list; the pool is cached without
+        start/limit so every page reuses it.
+        """
+        wanted = {value.strip() for value in normalized["category"].split(",")}
+        cache_payload = {
+            key: value for key, value in normalized.items() if key not in ("start", "limit")
+        }
+        cache_key = hashlib.sha256(
+            json.dumps(cache_payload, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        db = get_db()
+        cached = db.execute(
+            "SELECT article_ids, total, fetched_at FROM query_cache WHERE query_hash=?",
+            (cache_key,),
+        ).fetchone()
+        now = time.time()
+        ttl = current_app.config["ARXIV_CACHE_TTL"]
+        if cached and now - cached["fetched_at"] < ttl and not force_refresh:
+            ids = json.loads(cached["article_ids"])
+            return self._cached_result(ids[start:start + limit], len(ids))
+
+        params = {
+            "search_query": search_query,
+            "start": 0,
+            "max_results": self.PRIMARY_POOL_SIZE,
+            "sortBy": sort_by,
+            "sortOrder": sort_order,
+        }
+        try:
+            payload = self._fetch(params)
+            parsed = feedparser.parse(payload)
+        except (URLError, TimeoutError, OSError) as exc:
+            current_app.logger.warning("arXiv API request failed: %s", exc, exc_info=True)
+            if cached:
+                ids = json.loads(cached["article_ids"])
+                result = self._cached_result(ids[start:start + limit], len(ids))
+                result["stale"] = True
+                return result
+            raise ArxivError("arXiv is temporarily unavailable; no cached results exist.") from exc
+        if getattr(parsed, "bozo", False) and not parsed.entries:
+            raise ArxivError("arXiv returned an unreadable Atom response.")
+        fetched = [self._entry_to_article(entry) for entry in parsed.entries]
+        save_articles(fetched)
+        ids = [
+            article["arxiv_id"]
+            for article in fetched
+            if article["primary_category"] in wanted
+        ]
+        db.execute(
+            """INSERT INTO query_cache(query_hash, article_ids, total, fetched_at)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(query_hash) DO UPDATE SET article_ids=excluded.article_ids,
+                 total=excluded.total, fetched_at=excluded.fetched_at""",
+            (cache_key, json.dumps(ids), len(ids), now),
+        )
+        db.commit()
+        return self._cached_result(ids[start:start + limit], len(ids))
 
     def _fetch(self, params: dict) -> bytes:
         with self._lock:

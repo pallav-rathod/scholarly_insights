@@ -68,7 +68,7 @@ def home():
 
 @bp.get("/search")
 def search_page():
-    filters = {key: request.args.get(key, "") for key in ("q", "author", "category", "from_date", "to_date", "sort")}
+    filters = {key: request.args.get(key, "") for key in ("q", "author", "category", "from_date", "to_date", "sort", "primary_only")}
     results = None
     error = None
     if any(filters[key] for key in ("q", "author", "category")):
