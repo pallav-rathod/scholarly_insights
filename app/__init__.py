@@ -28,6 +28,7 @@ def create_app(test_config: dict | None = None) -> Flask:
         FIREBASE_WEB_API_KEY=os.environ.get("FIREBASE_WEB_API_KEY", ""),
         FIREBASE_AUTH_DOMAIN=os.environ.get("FIREBASE_AUTH_DOMAIN", ""),
         FIREBASE_APP_ID=os.environ.get("FIREBASE_APP_ID", ""),
+        FIREBASE_SERVICE_ACCOUNT_JSON=os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON", ""),
         ARXIV_API_URL=os.environ.get(
             "ARXIV_API_URL", "https://export.arxiv.org/api/query"
         ),
@@ -36,7 +37,10 @@ def create_app(test_config: dict | None = None) -> Flask:
     )
     if test_config:
         app.config.update(test_config)
-    Path(app.instance_path).mkdir(parents=True, exist_ok=True)
+    try:
+        Path(app.instance_path).mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
     app.teardown_appcontext(close_db)
     init_db_app(app)
     app.register_blueprint(bp)

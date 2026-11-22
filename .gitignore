@@ -6,3 +6,9 @@ __pycache__/
 instance/
 firebase-admin.json
 firebase-service-account.json
+.neon
+
+# Vercel
+.vercel
+.env*
+.DS_Store

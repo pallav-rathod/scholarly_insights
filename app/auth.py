@@ -14,10 +14,19 @@ def _firebase_admin():
     try:
         app = firebase_admin.get_app()
     except ValueError:
-        app = firebase_admin.initialize_app(
-            credentials.ApplicationDefault(),
-            {"projectId": current_app.config["FIREBASE_PROJECT_ID"]},
-        )
+        service_account_json = current_app.config.get("FIREBASE_SERVICE_ACCOUNT_JSON", "")
+        if service_account_json:
+            import json
+
+            app = firebase_admin.initialize_app(
+                credentials.Certificate(json.loads(service_account_json)),
+                {"projectId": current_app.config["FIREBASE_PROJECT_ID"]},
+            )
+        else:
+            app = firebase_admin.initialize_app(
+                credentials.ApplicationDefault(),
+                {"projectId": current_app.config["FIREBASE_PROJECT_ID"]},
+            )
     return auth, app
 
 

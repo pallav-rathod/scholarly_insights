@@ -178,7 +178,8 @@ class PostgresConnection:
         return self._connection.execute(statement.replace("?", "%s"), parameters)
 
     def executemany(self, statement: str, parameters):
-        return self._connection.executemany(statement.replace("?", "%s"), parameters)
+        with self._connection.cursor() as cursor:
+            return cursor.executemany(statement.replace("?", "%s"), parameters)
 
     def executescript(self, script: str) -> None:
         for statement in script.split(";"):
