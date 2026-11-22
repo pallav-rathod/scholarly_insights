@@ -35,6 +35,8 @@ def create_app(test_config: dict | None = None) -> Flask:
         ARXIV_MIN_INTERVAL=float(os.environ.get("ARXIV_MIN_INTERVAL", "3")),
         ARXIV_CACHE_TTL=int(os.environ.get("ARXIV_CACHE_TTL", str(24 * 60 * 60))),
         PUBLIC_BASE_URL=os.environ.get("PUBLIC_BASE_URL", ""),
+        RESEND_API_KEY=os.environ.get("RESEND_API_KEY", ""),
+        EMAIL_FROM=os.environ.get("EMAIL_FROM", ""),
     )
     if test_config:
         app.config.update(test_config)

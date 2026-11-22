@@ -9,6 +9,7 @@ from .arxiv import ArxivError, client
 from .auth import require_user
 from .db import get_db, row_to_article, save_articles
 from .insights import related_articles, summary
+from .mailer import email_new_paper_alerts
 
 bp = Blueprint("main", __name__)
 ARXIV_ID_RE = re.compile(r"^[A-Za-z0-9._/-]{1,80}$")
@@ -262,6 +263,8 @@ def refresh_tracker(tracker_id: str):
             new_ids.append(article["arxiv_id"])
     db.execute("UPDATE trackers SET last_notified_at=CURRENT_TIMESTAMP WHERE id=?", (tracker_id,))
     db.commit()
+    if new_ids:
+        email_new_paper_alerts(g.user["uid"], row["name"], new_ids)
     return jsonify(matched=len(result["articles"]), new_alerts=len(new_ids), stale=result["stale"])
 
 

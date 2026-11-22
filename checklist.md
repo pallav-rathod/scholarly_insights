@@ -22,7 +22,7 @@ User Accounts, Reading History, Trackers & Notifications, and Discussion Forum.
 | Article Details | [x] | `/article/<id>` displays title, abstract, authors, categories, dates, source/PDF links, related cached papers, and discussion. | No standalone `GET /api/articles/<id>` JSON route. Text normalization does not remove all LaTeX markup. |
 | User Accounts | [~] | Firebase Google sign-in is implemented in the browser; protected Flask routes verify ID tokens and use the verified UID. | Real Firebase configuration, provider setup, authorized domains, and server credentials must be configured. Automated tests use a fake token verifier. |
 | Reading History | [x] | Signed-in article visits can be recorded and retrieved with the library. Repeated views update activity time. | The API returns at most the latest 100 items; no export/clear-history flow. |
-| Trackers & Notifications | [~] | Users can create/list/delete trackers. Refresh searches arXiv and stores deduplicated in-app alerts. A CLI refreshes all trackers. | No email delivery or preconfigured scheduler. Trackers cannot currently be edited; refresh is user-triggered or external. |
+| Trackers & Notifications | [~] | Users can create/list/delete trackers. Refresh searches arXiv and stores deduplicated in-app alerts. A CLI refreshes all trackers. | Email alerts send via optional Resend config (`RESEND_API_KEY`) for new notifications only. No preconfigured scheduler. Trackers cannot currently be edited; refresh is user-triggered or external. |
 | Discussion Forum | [~] | Signed-in users can post article comments and replies. Replies must target a comment on the same article; the UI renders threads. | No edit/delete, moderation/reporting, pagination, or forum-wide discovery. |
 
 ## 2. Data and modeling requirements
@@ -199,7 +199,11 @@ The Git commit author email is part of public commit metadata. Use a GitHub
 - [~] PostgreSQL advisory lock is intended to serialize arXiv calls across
   Cloud Run instances; needs a live PostgreSQL test.
 - [ ] No nightly tracker scheduler is installed.
-- [ ] No email alerts are implemented.
+- [~] Email alerts are implemented via optional Resend configuration
+  (`RESEND_API_KEY`/`EMAIL_FROM`); they are sent only for newly created
+  notifications and are skipped when unconfigured or when the user has no
+  email on file. The default sender (`onboarding@resend.dev`) can only
+  deliver to the Resend account owner's address until a domain is verified.
 - [ ] No structured production monitoring/alerting or error-reporting service
   is configured.
 - [ ] No GitHub Actions CI workflow was evidenced.
