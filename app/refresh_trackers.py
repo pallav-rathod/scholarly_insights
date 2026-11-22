@@ -3,7 +3,6 @@ from __future__ import annotations
 from . import create_app
 from .arxiv import ArxivError, client
 from .db import get_db
-from .mailer import email_new_paper_alerts
 
 
 def refresh_all() -> int:
@@ -25,24 +24,18 @@ def refresh_all() -> int:
             except (ValueError, ArxivError) as exc:
                 app.logger.error("Could not refresh tracker %s: %s", tracker["id"], exc)
                 continue
-            new_ids = []
             for article in results["articles"]:
-                cursor = db.execute(
+                db.execute(
                     """INSERT INTO notifications(uid, tracker_id, arxiv_id)
                        VALUES (?, ?, ?)
-                       ON CONFLICT(uid, tracker_id, arxiv_id) DO NOTHING
-                       RETURNING arxiv_id""",
+                       ON CONFLICT(uid, tracker_id, arxiv_id) DO NOTHING""",
                     (tracker["uid"], tracker["id"], article["arxiv_id"]),
                 )
-                if cursor.fetchone():
-                    new_ids.append(article["arxiv_id"])
             db.execute(
                 "UPDATE trackers SET last_notified_at=CURRENT_TIMESTAMP WHERE id=?",
                 (tracker["id"],),
             )
             db.commit()
-            if new_ids:
-                email_new_paper_alerts(tracker["uid"], tracker["name"], new_ids)
             refreshed += 1
     return refreshed
 

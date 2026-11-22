@@ -197,7 +197,7 @@ class AppTests(unittest.TestCase):
         self.assertEqual(len(alerts["alerts"]), 1)
         self.assertEqual(alerts["alerts"][0]["title"], article["title"])
 
-    def test_tracker_refresh_emails_only_newly_created_alerts(self):
+    def test_tracker_refresh_reports_newly_created_alerts(self):
         article = self.article()
         self.save_article()
         created = self.client.post(
@@ -209,7 +209,7 @@ class AppTests(unittest.TestCase):
         with patch(
             "app.routes.client.search",
             return_value={"articles": [article], "total": 1, "stale": False},
-        ), patch("app.routes.email_new_paper_alerts") as email:
+        ):
             first = self.client.post(
                 f"/api/trackers/{tracker_id}/refresh", headers=self.auth_headers()
             ).get_json()
@@ -218,8 +218,6 @@ class AppTests(unittest.TestCase):
             ).get_json()
         self.assertEqual(first["new_alerts"], 1)
         self.assertEqual(second["new_alerts"], 0)
-        self.assertEqual(email.call_count, 1)
-        self.assertEqual(email.call_args.args[2], ["2401.12345"])
 
     def test_authenticated_comments_can_be_replied_to(self):
         self.save_article()

@@ -227,8 +227,7 @@ Refresh trackers with `python -m app.refresh_trackers`. To run it nightly,
 schedule that command with the host's scheduler. Tracker refreshes bypass a
 fresh search-cache entry so newly published matches are checked; outbound
 requests still share the three-second throttle. The command records matching
-papers as in-app notifications and, when SMTP is configured, emails the
-tracker owner about newly created alerts only.
+papers as in-app notifications. It does not send email.
 
 ## Data/API behavior
 
