@@ -2,8 +2,9 @@
 
 This runbook covers local execution, Firebase sign-in, tests, optional
 containers, and the prepared public-hosting architecture. Read
-[`Agent.md`](./Agent.md) for handoff guidance and [`README.md`](./README.md)
-for the project overview.
+[`Agent.md`](./Agent.md) for handoff guidance, [`README.md`](./README.md) for
+the project overview, and [`checklist.md`](./checklist.md) for the tracked
+feature and deployment status.
 
 ## 1. What the application does
 
@@ -357,7 +358,8 @@ Before pushing this project:
 ## 8. Presentation audit highlights
 
 These highlights summarize the earlier presentation review; verify the current
-source and tests before claiming any item is complete.
+source and tests before claiming any item is complete. See
+[`checklist.md`](./checklist.md) for the detailed itemized status.
 
 - Search, article detail pages, history, and threaded discussion are present.
 - Firebase account features depend on correct external Firebase configuration.

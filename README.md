@@ -5,7 +5,8 @@ topics, and discussing articles.
 
 For an AI-agent entry point, see [`AGENTS.md`](./AGENTS.md), then
 [`Agent.md`](./Agent.md). For detailed local-run and hosting steps, see
-[`run.md`](./run.md).
+[`run.md`](./run.md). The implementation and deployment status is tracked in
+[`checklist.md`](./checklist.md).
 
 ## Features
 

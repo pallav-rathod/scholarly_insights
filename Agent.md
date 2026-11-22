@@ -3,7 +3,8 @@
 This file is the handoff for an AI agent or developer who needs to understand,
 run, test, modify, or deploy Scholarly Insight. Read this together with
 [`README.md`](./README.md), [`run.md`](./run.md), and, when checking product
-requirements, the supplied midterm presentation.
+requirements, [`checklist.md`](./checklist.md) and the supplied midterm
+presentation.
 
 ## Project summary
 
@@ -22,8 +23,8 @@ Python-first requirement.
 1. Read `README.md` for current setup and configuration.
 2. Read `run.md` for exact local, test, Docker, and cloud-hosting procedures.
 3. Read `description.md` for the original project objective.
-4. Review the supplied midterm presentation and verify every feature/model
-   claim against the current source and tests.
+4. Read `checklist.md`, review the supplied midterm presentation, and verify
+   every feature/model claim against the current source and tests.
 5. Inspect the specific source and tests before changing behavior. Treat the
    source and tests as authoritative if a document and the implementation
    differ, then update the related documentation.
@@ -49,6 +50,7 @@ Python-first requirement.
 | `firebase.json` | Firebase Hosting rewrite to Cloud Run service `scholarly-insight` in `us-central1`. |
 | `.firebaserc` | Firebase project alias, currently `scholarly-insights-77069`. |
 | `Scholarly Insight — Midterm Presentation.pdf` | Original product and architecture requirements. |
+| `checklist.md` | Feature, technology, database, deployment, and credential-safety checklist. |
 
 ## Local development
 
@@ -151,8 +153,8 @@ Browser -> Firebase Hosting -> Cloud Run (Flask/Gunicorn) -> Cloud SQL (PostgreS
 
 ## Product audit: accurate completion claims
 
-The following caveats were identified during the earlier presentation audit;
-re-check the current source and tests before making new completion claims:
+The detailed evidence and status are tracked in `checklist.md`. Re-check the
+current source and tests before making completion claims. Key caveats include:
 
 - Search, article pages, reading history, and threaded comments are present.
 - User accounts require working Firebase client configuration and server-side
