@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import ssl
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+import certifi
 
 from flask import current_app
 
@@ -33,11 +36,13 @@ def send_email(subject: str, body: str, to: str) -> bool:
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            "User-Agent": "ScholarlyInsight/1.0 (academic research discovery)",
         },
         method="POST",
     )
+    context = ssl.create_default_context(cafile=certifi.where())
     try:
-        with urlopen(request, timeout=15) as response:
+        with urlopen(request, timeout=15, context=context) as response:
             return 200 <= response.status < 300
     except HTTPError as exc:
         current_app.logger.warning("Resend rejected alert email: %s %s", exc.code, exc.read()[:500])
