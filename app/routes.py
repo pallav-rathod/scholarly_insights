@@ -71,7 +71,7 @@ def search_page():
     filters = {key: request.args.get(key, "") for key in ("q", "author", "category", "from_date", "to_date", "sort", "primary_only")}
     results = None
     error = None
-    if any(filters[key] for key in ("q", "author", "category")):
+    if request.args:
         filters["start"] = request.args.get("start", "0")
         filters["limit"] = request.args.get("limit", "20")
         try:
@@ -111,6 +111,8 @@ def alerts_page():
 
 @bp.get("/api/search")
 def api_search():
+    if not any(request.args.get(key) for key in ("q", "author", "category", "id", "from_date", "to_date")):
+        return jsonify(error="Provide at least one search filter."), 400
     try:
         result = client.search(request.args.to_dict())
     except ValueError as exc:

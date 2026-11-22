@@ -82,6 +82,8 @@ class ArxivClient:
                 normalized["from_date"] = parsed_from.isoformat()
             if parsed_to:
                 normalized["to_date"] = parsed_to.isoformat()
+        if not terms:
+            terms.append("cat:*")
         return " AND ".join(terms), normalized
 
     @staticmethod
@@ -95,8 +97,6 @@ class ArxivClient:
 
     def search(self, filters: dict, *, force_refresh: bool = False) -> dict:
         search_query, normalized = self.build_query(filters)
-        if not search_query:
-            raise ValueError("Enter a keyword, author, or category to search")
         sort = filters.get("sort") or "newest"
         sort_map = {
             "newest": ("submittedDate", "descending"),

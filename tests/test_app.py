@@ -120,6 +120,15 @@ class AppTests(unittest.TestCase):
         self.assertIn(b"Graph learning for research", response.data)
         self.assertIn(b"Next page", response.data)
 
+    def test_search_page_without_filters_browses_all_papers(self):
+        with patch(
+            "app.routes.client.search",
+            return_value={"articles": [], "total": 0, "stale": False},
+        ) as search:
+            response = self.client.get("/search?sort=newest")
+        self.assertEqual(response.status_code, 200)
+        search.assert_called_once()
+
     def test_article_details_render_from_normalized_record(self):
         with patch("app.routes._ensure_article", return_value=self.article()), patch(
             "app.routes.related_articles", return_value=[]

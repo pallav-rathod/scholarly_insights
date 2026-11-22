@@ -6,19 +6,21 @@
   <p>Combine filters to find papers across arXiv. Every result links back to its source.</p>
 </section>
 <form class="search-panel" action="{{ url_for('main.search_page') }}" method="get">
-  <label class="field field-keyword"><span>Keyword</span><input name="q" value="{{ filters.q }}" placeholder="e.g. graph neural networks"></label>
-  <label class="field"><span>Author</span><input name="author" value="{{ filters.author }}" placeholder="Author name"></label>
-  <label class="field"><span>Category</span><input name="category" value="{{ filters.category }}" placeholder="e.g. cs.LG"></label>
-  <label class="field"><span>From</span><input type="date" name="from_date" value="{{ filters.from_date }}"></label>
-  <label class="field"><span>To</span><input type="date" name="to_date" value="{{ filters.to_date }}"></label>
-  <label class="field"><span>Sort by</span><select name="sort">
-    <option value="newest" {{ 'selected' if filters.sort in ('', 'newest') else '' }}>Newest</option>
-    <option value="relevance" {{ 'selected' if filters.sort == 'relevance' else '' }}>Relevance</option>
-    <option value="updated" {{ 'selected' if filters.sort == 'updated' else '' }}>Recently updated</option>
-  </select></label>
-  <input type="hidden" name="start" value="0">
-  <div class="search-actions">
-    <label class="check-option"><input type="checkbox" name="primary_only" value="1" {{ 'checked' if filters.primary_only }}> Primary category only</label>
+  <div class="search-row">
+    <label class="field field-keyword"><span>Keyword</span><input name="q" value="{{ filters.q }}" placeholder="e.g. graph neural networks"></label>
+    <label class="field"><span>Author</span><input name="author" value="{{ filters.author }}" placeholder="Author name"></label>
+    <label class="field"><span>Category</span><input name="category" value="{{ filters.category }}" placeholder="e.g. cs.LG"></label>
+    <label class="check-option search-check"><input type="checkbox" name="primary_only" value="1" {{ 'checked' if filters.primary_only }}> Primary category only</label>
+  </div>
+  <div class="search-row">
+    <input type="hidden" name="start" value="0">
+    <label class="field"><span>From</span><input type="date" name="from_date" value="{{ filters.from_date }}"></label>
+    <label class="field"><span>To</span><input type="date" name="to_date" value="{{ filters.to_date }}"></label>
+    <label class="field"><span>Sort by</span><select name="sort">
+      <option value="newest" {{ 'selected' if filters.sort in ('', 'newest') else '' }}>Newest</option>
+      <option value="relevance" {{ 'selected' if filters.sort == 'relevance' else '' }}>Relevance</option>
+      <option value="updated" {{ 'selected' if filters.sort == 'updated' else '' }}>Recently updated</option>
+    </select></label>
     <button class="button button-primary" type="submit">Search papers <span aria-hidden="true">→</span></button>
   </div>
 </form>

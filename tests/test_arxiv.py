@@ -87,6 +87,15 @@ class ArxivTests(unittest.TestCase):
         self.assertEqual(len(result["articles"]), 1)
         self.assertEqual(fetch.call_args.args[0]["sortBy"], "submittedDate")
 
+    def test_empty_filters_match_all_papers(self):
+        query, normalized = ArxivClient().build_query({})
+        self.assertEqual(query, "cat:*")
+        self.assertEqual(normalized, {})
+        with patch.object(client, "_fetch", return_value=ATOM) as fetch:
+            result = client.search({"sort": "newest"})
+        self.assertEqual(result["total"], 1)
+        self.assertEqual(fetch.call_args.args[0]["search_query"], "cat:*")
+
     def test_comma_only_author_and_category_are_rejected(self):
         for filters, field in (({"author": ",,"}, "author"), ({"category": ",,"}, "category")):
             with self.subTest(field=field), self.assertRaisesRegex(ValueError, field):
