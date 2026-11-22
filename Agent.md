@@ -40,6 +40,7 @@ Python-first requirement.
 | `app/db.py` | SQLite and PostgreSQL schemas, connections, persistence helpers. |
 | `app/auth.py` | Firebase Admin ID-token verification for protected routes. |
 | `app/insights.py` | Cached metadata summaries and related-paper ranking. |
+| `app/mailer.py` | Resend API email alerts for newly created tracker notifications. |
 | `app/refresh_trackers.py` | CLI to refresh all trackers and create in-app alerts. |
 | `app/templates/` | Jinja pages. |
 | `app/static/` | Browser JavaScript and CSS. |
@@ -88,13 +89,14 @@ Cloud Run, Docker, or Firebase Hosting has been integration-tested.
 
 - Local development defaults to SQLite. Set `DATABASE_PATH` only when a
   different local file location is needed.
-- When `DATABASE_URL` is configured, the app uses PostgreSQL. In production,
-  `APP_ENV=production`, `SECRET_KEY`, and `DATABASE_URL` are required.
+- When `DATABASE_URL` is configured, the app uses PostgreSQL (Neon in
+  production). In production, `APP_ENV=production`, `SECRET_KEY`, and
+  `DATABASE_URL` are required.
 - Application tables are created idempotently at startup. There is no
   versioned migration framework; review schema changes for both SQLite and
   PostgreSQL.
-- Do not use Cloud Run's writable container filesystem as durable storage.
-  Production is designed for Cloud SQL PostgreSQL.
+- Serverless container filesystems are not durable storage. Production uses
+  Neon PostgreSQL via `DATABASE_URL`.
 - Search results are fetched on demand from
   `https://export.arxiv.org/api/query`. The app uses `feedparser` for Atom,
   `certifi` for verified TLS, a 24-hour default SQLite/PostgreSQL result cache,
@@ -125,7 +127,8 @@ Cloud Run, Docker, or Firebase Hosting has been integration-tested.
 
 ## Deployment guardrails
 
-The prepared production architecture is:
+Current production runs on Vercel + Neon (see "Vercel deployment" below). The
+repository also contains a prepared but unused Google Cloud architecture:
 
 ```text
 Browser -> Firebase Hosting -> Cloud Run (Flask/Gunicorn) -> Cloud SQL (PostgreSQL)
@@ -151,6 +154,24 @@ Browser -> Firebase Hosting -> Cloud Run (Flask/Gunicorn) -> Cloud SQL (PostgreS
   commands, and post-deployment checks. Do not put secret values in Git or
   command history.
 
+## Vercel deployment (current production)
+
+- Live at `https://scholarlyinsights.vercel.app`; Vercel project
+  `scholarly_insights` is git-connected to `main` on
+  `pallav-rathod/scholarly_insights`, so pushes auto-deploy. `vercel --prod`
+  also works from the repo root (the directory is already linked via the
+  gitignored `.vercel/` folder).
+- Framework preset is Flask; install command `pip install -r
+  requirements.txt`; no build command or output directory.
+- Production env vars live in Vercel (`vercel env add NAME production`):
+  `APP_ENV=production`, `SECRET_KEY`, `DATABASE_URL` (Neon), the four
+  `FIREBASE_*` client values, `RESEND_API_KEY`, `EMAIL_FROM`,
+  `PUBLIC_BASE_URL`.
+- Vercel Authentication deployment protection is enabled — the public URL
+  requires Vercel login; use `vercel curl <url>` to verify responses.
+- Resend's `onboarding@resend.dev` sender only delivers to the Resend
+  account owner's email until a domain is verified in Resend.
+
 ## Product audit: accurate completion claims
 
 The detailed evidence and status are tracked in `checklist.md`. Re-check the
@@ -171,16 +192,17 @@ current source and tests before making completion claims. Key caveats include:
 - Threaded replies use parent IDs and recursive rendering. Edit/delete,
   moderation, and forum-wide discovery are not implemented.
 - SQLite and PostgreSQL schemas are present; the notifications table is an
-  addition to the presentation's proposed tables. Production PostgreSQL has
-  not been integration-tested against a live instance.
+  addition to the presentation's proposed tables. Production uses Neon
+  PostgreSQL on Vercel; the alternative Cloud SQL path is untested.
 - The presentation's React/Tailwind front end was replaced with Flask/Jinja
   and responsive CSS to satisfy the Python-first requirement.
 
 ## Handoff status
 
-Deployment configuration and instructions are present, but do not assume the
-application is online. At the last environment check, Firebase CLI could list
-the configured Firebase project, while `gcloud` was not installed and billing
-status could not be verified. No Cloud Run or Cloud SQL deployment was
-confirmed. Re-check the current CLI, account, billing, and cloud-resource state
-before proceeding.
+The application is live on Vercel at `https://scholarlyinsights.vercel.app`
+with Neon PostgreSQL and Resend email alerts configured; deployments were
+verified READY on 2026-11-22 and a test alert email was delivered. The
+prepared Google Cloud path (Cloud Run + Cloud SQL + Firebase Hosting) exists
+in the repo but was never deployed — treat it as an unused alternative. The
+`gcloud` CLI was not installed at last check; `vercel` and `firebase` CLIs
+are available.

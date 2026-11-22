@@ -126,14 +126,16 @@ python -m compileall -q app tests wsgi.py
 ```
 
 The suite covers query validation and parsing, arXiv cache behavior, routes,
-authentication guards, favorites/history, trackers, comments, and the
-PostgreSQL connection adapter. Unit tests do not prove live Firebase OAuth,
-Cloud SQL connectivity, Cloud Run deployment, or Firebase Hosting behavior.
+authentication guards, favorites/history, trackers, comments, the mailer, and
+the PostgreSQL connection adapter. Unit tests do not prove live Firebase OAuth,
+Neon connectivity, Vercel deployment, Docker builds, or the alternative
+Cloud Run/Firebase Hosting path.
 
 ## 4. Useful routes and maintenance
 
 - `/` - home and cached-data summary.
-- `/search` - HTML search page.
+- `/search` - HTML search page. Submitting the form with every filter empty
+  browses all arXiv papers (`cat:*`); any filled filter narrows results.
 - `/api/search?q=graph` - JSON arXiv search endpoint.
 - `/api/insights` - summary calculated from cached article records.
 - `/article/<arxiv-id>` - article details, related cached papers, and comments.
@@ -160,37 +162,37 @@ alerts only; without it, email delivery is skipped.
 
 ## 5. Production hosting architecture and status
 
-The prepared architecture is:
+The live production architecture is:
 
 ```text
-Public browser
-    -> Firebase Hosting
-    -> Cloud Run service scholarly-insight (Flask/Gunicorn)
-    -> Cloud SQL for PostgreSQL
-
-Google sign-in -> Firebase Authentication -> verified ID token in Flask
+Browser -> Vercel (Flask serverless) -> Neon PostgreSQL
+        -> Firebase Authentication for identity
+        -> Resend for optional tracker alert emails
 ```
 
-Firebase Hosting does not execute Python. The checked-in `firebase.json`
-rewrites all requests to Cloud Run service `scholarly-insight` in
-`us-central1`. The project configured in `.firebaserc` is
-`scholarly-insights-77069`.
+- Public URL: `https://scholarlyinsights.vercel.app`
+- Vercel project `scholarly_insights` is git-connected to
+  `pallav-rathod/scholarly_insights` (`main`); pushes auto-deploy production,
+  and `vercel --prod` works from the repo root.
+- Framework preset is **Flask**; install command `pip install -r
+  requirements.txt`.
+- Production env vars (set via `vercel env add` or the dashboard):
+  `APP_ENV=production`, `SECRET_KEY`, `DATABASE_URL` (Neon Postgres),
+  `FIREBASE_PROJECT_ID`, `FIREBASE_WEB_API_KEY`, `FIREBASE_AUTH_DOMAIN`,
+  `FIREBASE_APP_ID`, `RESEND_API_KEY`, `EMAIL_FROM`, `PUBLIC_BASE_URL`.
+- Vercel Authentication (deployment protection) is enabled on deployments.
+- Email alerts go through Resend and only fire for newly created
+  notifications. The default `onboarding@resend.dev` sender can deliver only
+  to the Resend account owner's address until a domain is verified.
 
-**Deployment is not confirmed live.** The workspace contains preparation and
-deployment configuration, but no successful Cloud Run or Hosting deployment
-was verified in this conversation. At the last check, Firebase CLI could list
-the Firebase project; `gcloud` was not installed and billing status remained
-unknown. Check the current project state rather than relying on this note.
+A Google Cloud alternative (Firebase Hosting + Cloud Run + Cloud SQL) is
+prepared in this repository but is **not** the current deployment; see
+section 6.
 
-The intended default public URL is:
+## 6. Alternative deployment: Firebase Hosting + Cloud Run + Cloud SQL
 
-- `https://scholarly-insights-77069.web.app`
-- `https://scholarly-insights-77069.firebaseapp.com`
-
-Firebase does not provide a default `*.firebase.com` domain. A custom domain
-must be registered/owned by the user and then connected in Firebase Hosting.
-
-## 6. Deploy to Firebase Hosting + Cloud Run + Cloud SQL
+> This path is prepared but unused — production currently runs on Vercel +
+> Neon (section 5). Follow these steps only for a deliberate migration.
 
 This deployment requires a Firebase project on the Blaze plan with a linked
 billing account. Cloud Run, Cloud SQL, Secret Manager, builds, storage, and
@@ -353,8 +355,8 @@ Before pushing this project:
   database passwords in commits or issue reports.
 - Public Firebase Web config values may be used by the browser, but do not
   confuse them with Firebase Admin credentials.
-- Do not claim the website is deployed until the Cloud Run health check and
-  Firebase Hosting URL both work.
+- Do not claim the website is deployed until the Vercel deployment is READY
+  and the public URL responds correctly.
 
 ## 8. Presentation audit highlights
 
@@ -364,8 +366,8 @@ source and tests before claiming any item is complete. See
 
 - Search, article detail pages, history, and threaded discussion are present.
 - Firebase account features depend on correct external Firebase configuration.
-- Trackers and deduplicated in-app alerts are present, but no nightly scheduler
-  or email delivery is configured.
+- Trackers and deduplicated in-app alerts are present, plus optional Resend
+  email alerts for new notifications; no nightly scheduler is configured.
 - The app has no category directory, autocomplete/trie, REST article-detail
   endpoint, comment moderation/edit/delete, or forum-wide discovery.
 - Related-paper ranking uses TF-IDF-style text similarity over cached papers

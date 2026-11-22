@@ -11,14 +11,16 @@ For an AI-agent entry point, see [`AGENTS.md`](./AGENTS.md), then
 ## Features
 
 - Search arXiv by keyword, author, category, and submitted date; sort and page
-  through results.
+  through results. Leaving every filter empty browses all of arXiv.
 - View article details, arXiv/PDF links, related cached papers, and threaded
   comments.
 - Sign in with Firebase Google authentication to manage favorites, reading
   history, trackers, and in-app alerts.
+- Optional email alerts through Resend: refreshing a tracker emails the owner
+  about newly matched papers only.
 - Browse locally cached category/author/month summaries.
-- Cache normalized searches in SQLite for 24 hours and serialize outbound
-  arXiv requests with a minimum three-second gap.
+- Cache normalized searches in SQLite/PostgreSQL for 24 hours and serialize
+  outbound arXiv requests with a minimum three-second gap.
 
 arXiv does not provide citation, download, or readership counts. The insights
 page only summarizes cached arXiv metadata and must not be interpreted as
@@ -44,12 +46,10 @@ Firebase settings can stay blank. Start the server with:
 flask --app wsgi run --debug
 ```
 
-Open `http://localhost:5000`. Stop the server with Ctrl+C. The SQLite database
-is created automatically at `instance/scholarly_insight.sqlite3`; set
-`DATABASE_PATH` to choose another location.
-
-The SQLite database is created automatically at `instance/scholarly_insight.sqlite3`.
-Set `DATABASE_PATH` to choose another location.
+Open `http://localhost:5000`. Stop the server with Ctrl+C. The app defaults to
+SQLite at `instance/scholarly_insight.sqlite3`; set `DATABASE_PATH` to choose
+another location, or set `DATABASE_URL` to use PostgreSQL locally (for example
+the project's Neon database).
 
 For a local container, copy `.env.example` to `.env`, then run
 `docker compose up --build`. The base Compose setup supports public search;
@@ -107,7 +107,39 @@ docker compose -f docker-compose.yml -f docker-compose.firebase.yml up --build
 The base Compose setup without the Firebase override still supports public
 search and browse.
 
-## Production deployment: Firebase Hosting + Cloud Run + Cloud SQL
+## Production deployment: Vercel + Neon Postgres
+
+The live deployment runs on **Vercel** (Flask serverless preset) with
+**Neon PostgreSQL** for application data and **Resend** for optional email
+alerts. Firebase Authentication still handles Google sign-in.
+
+- Public URL: `https://scholarlyinsights.vercel.app`
+- Vercel project: `scholarly_insights` (team `pallav-rathod`), linked to the
+  GitHub repo `pallav-rathod/scholarly_insights` on branch `main`
+- Pushing to `main` triggers a Vercel production deployment automatically;
+  `vercel --prod` from the repo root also works
+- Vercel project settings: framework preset **Flask**, install command
+  `pip install -r requirements.txt`, no build/output overrides
+- Production environment variables are managed with `vercel env add NAME
+  production` (or the Vercel dashboard): `APP_ENV=production`, `SECRET_KEY`,
+  `DATABASE_URL` (Neon), the four `FIREBASE_*` client values, `RESEND_API_KEY`,
+  `EMAIL_FROM`, and `PUBLIC_BASE_URL=https://scholarlyinsights.vercel.app`
+- Deployment Protection (Vercel Authentication) is enabled, so the public URL
+  prompts for Vercel login; share deployment URLs carefully
+- Neon holds the PostgreSQL database used via `DATABASE_URL`; the app creates
+  its schema at startup
+
+Email alerts use Resend. With only `RESEND_API_KEY` and the default
+`onboarding@resend.dev` sender, Resend delivers solely to the Resend account
+owner's address; sending to other users requires verifying a domain in Resend
+and setting `EMAIL_FROM` to an address on it.
+
+## Alternative deployment path: Firebase Hosting + Cloud Run + Cloud SQL
+
+The repository also contains a prepared Google Cloud deployment path
+(`Dockerfile`, `firebase.json`, `.firebaserc`, and the steps below). It is
+**not the current production deployment**; the live site runs on Vercel as
+described above. Keep this section for reference or a future migration.
 
 Firebase Hosting serves the public `*.web.app` site and forwards requests to
 the Flask service on Cloud Run. Cloud SQL for PostgreSQL stores the app data;

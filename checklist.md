@@ -18,7 +18,7 @@ User Accounts, Reading History, Trackers & Notifications, and Discussion Forum.
 
 | Feature | Status | What is present | Remaining work / caveat |
 |---|---|---|---|
-| Search & Browse | [~] | Flask search page and JSON API support keyword, author, category, submitted-date range, sort, and pagination. The server queries the arXiv Atom API and validates filters. | No category catalog/directory or autocomplete; categories are entered as text. |
+| Search & Browse | [~] | Flask search page and JSON API support keyword, author, category, submitted-date range, sort, and pagination. Submitting with all filters empty browses all arXiv papers via `cat:*`. The server queries the arXiv Atom API and validates filters. | No category catalog/directory or autocomplete; categories are entered as text. |
 | Article Details | [x] | `/article/<id>` displays title, abstract, authors, categories, dates, source/PDF links, related cached papers, and discussion. | No standalone `GET /api/articles/<id>` JSON route. Text normalization does not remove all LaTeX markup. |
 | User Accounts | [~] | Firebase Google sign-in is implemented in the browser; protected Flask routes verify ID tokens and use the verified UID. | Real Firebase configuration, provider setup, authorized domains, and server credentials must be configured. Automated tests use a fake token verifier. |
 | Reading History | [x] | Signed-in article visits can be recorded and retrieved with the library. Repeated views update activity time. | The API returns at most the latest 100 items; no export/clear-history flow. |
@@ -64,11 +64,13 @@ User Accounts, Reading History, Trackers & Notifications, and Discussion Forum.
 | External scholarly data | arXiv Atom API, parsed with `feedparser` | [x] Implemented; live availability depends on arXiv and network access. |
 | HTTPS trust | `certifi` CA bundle with normal TLS verification | [x] Implemented; addresses the earlier local Python CA-bundle problem. |
 | Local database | SQLite | [x] Implemented and initialized automatically. |
-| Production database | PostgreSQL via `psycopg`, planned Cloud SQL | [~] Adapter and schema are present; no live PostgreSQL integration/deployment verified. |
+| Production database | PostgreSQL via `psycopg`, hosted on Neon | [~] Live on Vercel via `DATABASE_URL`; schema initializes at startup. |
 | Authentication | Firebase Authentication Google provider in browser; Firebase Admin verification in Flask | [~] Code exists; real credentials and project settings are external prerequisites. |
-| Production compute | Docker image / Gunicorn on Cloud Run | [~] Configuration prepared; image build and Cloud Run deployment not verified. |
-| Public routing | Firebase Hosting rewrite to Cloud Run | [~] `firebase.json` is configured; Hosting deployment is not confirmed. |
-| Secrets | `.env` locally; Secret Manager planned for production | [~] Secret paths are documented and ignored locally; production Secret Manager values/resources not verified. |
+| Production compute | Vercel serverless (Flask preset, git-connected to `main`) | [x] Deployed and serving `https://scholarlyinsights.vercel.app`; also `vercel --prod`. |
+| Public routing | Vercel | [x] Live; Vercel Authentication deployment protection is enabled. |
+| Email delivery | Resend HTTPS API (`app/mailer.py`) | [~] Implemented and configured in production; sends only for newly created notifications. Default `onboarding@resend.dev` sender delivers only to the Resend account owner's address until a domain is verified. |
+| Alternative compute/routing | Docker image / Gunicorn on Cloud Run behind Firebase Hosting | [~] Prepared but unused; no Cloud Run or Hosting deployment exists. |
+| Secrets | `.env` locally; Vercel environment variables in production | [~] Production vars set via `vercel env`; never committed. |
 | Background refresh | `python -m app.refresh_trackers` | [~] Command exists; no scheduler is configured. |
 | API documentation / CI | None evidenced | [ ] No OpenAPI document or GitHub Actions workflow was present in the reviewed project. |
 
@@ -123,48 +125,38 @@ committed, uploaded into an image, or pasted into chat.
 - [x] Unit tests use `python -m unittest discover -s tests -v`.
 - [x] Tests cover arXiv query construction, parsing/cache behavior, app routes,
   auth guards, library, trackers, comments, and PostgreSQL adapter behavior.
-- [~] The suite passed 23 tests on 2026-11-20; rerun it after future changes
+- [~] The suite passed 31 tests on 2026-11-22; rerun it after future changes
   and do not infer external integration success from unit tests.
 - [~] A live local arXiv search returned HTTP 200 in the earlier debugging
   session; rerun if network, code, or runtime changes.
 - [ ] Live Firebase Google sign-in has not been proven by the unit suite.
-- [ ] PostgreSQL, Docker image build, Cloud Run, and Firebase Hosting have not
-  been integration-verified by the unit suite.
+- [~] Production runs on Vercel + Neon PostgreSQL + Resend; the alternative
+  Cloud Run/Firebase Hosting path and Docker image build remain unverified.
 
 ## 8. Hosting and publication checklist
 
-Selected target architecture:
+Current production architecture:
 
 ```text
-Browser -> Firebase Hosting -> Cloud Run (Flask/Gunicorn) -> Cloud SQL PostgreSQL
-                           -> Firebase Authentication for identity
+Browser -> Vercel (Flask serverless) -> Neon PostgreSQL
+        -> Firebase Authentication for identity
+        -> Resend for optional tracker alert emails
 ```
 
 | Hosting step | Status |
 |---|---|
-| Cloud Run Dockerfile and Gunicorn entry point | [x] Configuration exists; build/runtime not verified here. |
-| Cloud SQL PostgreSQL adapter and schema | [~] Code exists; live database path not tested. |
-| Firebase Hosting rewrite to service `scholarly-insight`, region `us-central1` | [x] `firebase.json` contains this configuration. |
-| Firebase project alias `scholarly-insights-77069` | [x] Present in `.firebaserc`; verify the intended account/project before deploy. |
-| Billing account linked / Firebase upgraded to Blaze | [ ] Not verified. |
-| Cloud APIs enabled and Cloud SQL created | [ ] Not verified. |
-| Runtime service account/IAM permissions created | [ ] Not verified. |
-| Production secrets stored in Secret Manager | [ ] Not verified. |
-| Cloud Run service deployed and `/health` tested | [ ] Not verified. |
-| Firebase Hosting deployed and public URL tested | [ ] Not verified. |
-| Production Firebase authorized domain configured | [ ] Not verified. |
-| Ongoing cost/budget monitoring set up | [ ] Not verified. |
+| Vercel project `scholarly_insights` linked to GitHub `main` | [x] Confirmed via `vercel project inspect`. |
+| Flask preset + `pip install -r requirements.txt` install command | [x] Confirmed in project settings. |
+| Production deployments READY at `scholarlyinsights.vercel.app` | [x] Multiple successful `vercel --prod` deployments verified. |
+| Neon PostgreSQL via `DATABASE_URL` | [~] Configured in Vercel env; app creates schema at startup. |
+| Production env vars (`APP_ENV`, `SECRET_KEY`, Firebase, Resend, `PUBLIC_BASE_URL`) | [~] Set via `vercel env`; values not re-verified here. |
+| Resend API key configured and test email delivered | [x] Test send to the Resend account owner succeeded on 2026-11-22. |
+| Vercel Authentication deployment protection | [x] Enabled; public URL requires Vercel login. |
+| Firebase Hosting / Cloud Run / Cloud SQL alternative path | [~] Prepared in repo (`firebase.json`, `Dockerfile`, run.md section 6); never deployed. |
 
-The intended Firebase default domains are
-`scholarly-insights-77069.web.app` and
-`scholarly-insights-77069.firebaseapp.com`, not `*.firebase.com`. A custom
-domain must be owned by the user. Firebase Hosting does not execute Flask;
-Cloud Run is required for the Python backend.
-
-Cloud Run, Cloud SQL, Secret Manager, and related services can incur charges.
-Do not enable billing, create billable resources, or deploy without the user's
-explicit approval in the active conversation. See `run.md` for the step-by-step
-deployment procedure.
+The Vercel deployment auto-deploys on pushes to `main`; `vercel --prod` also
+works. Do not claim additional cloud resources exist without checking the
+Vercel/Neon/Resend dashboards.
 
 ## 9. GitHub repository and credential handling
 
@@ -197,7 +189,7 @@ The Git commit author email is part of public commit metadata. Use a GitHub
 - [~] Cache TTL defaults to 24 hours, but expired query rows are not globally
   evicted by a background cleanup job.
 - [~] PostgreSQL advisory lock is intended to serialize arXiv calls across
-  Cloud Run instances; needs a live PostgreSQL test.
+  serverless instances; needs a live multi-instance test.
 - [ ] No nightly tracker scheduler is installed.
 - [~] Email alerts are implemented via optional Resend configuration
   (`RESEND_API_KEY`/`EMAIL_FROM`); they are sent only for newly created
@@ -218,11 +210,12 @@ The Git commit author email is part of public commit metadata. Use a GitHub
 - [ ] Verify the current GitHub repository and ensure no secrets exist in its
   history.
 - [ ] Configure and test Firebase sign-in using the actual project.
-- [ ] Provision Cloud SQL and verify PostgreSQL schema/CRUD behavior.
+- [ ] Verify Neon PostgreSQL schema/CRUD behavior in production.
 - [ ] Build and run the Docker image locally, if Docker is available.
-- [ ] Deploy Cloud Run only after billing/cost approval; verify `/health`.
-- [ ] Deploy Firebase Hosting and verify the actual public URL.
-- [ ] Test search, article detail, Firebase sign-in, favorite/library, tracker,
-  alerts, and threaded comments against the hosted deployment.
-- [ ] Add the deployed Hosting domain to Firebase Auth authorized domains.
-- [ ] Review logs, IAM, secrets, and billing after deployment.
+- [ ] Verify the Vercel production deployment (`vercel ls`, public URL).
+- [ ] Test search (including empty-filter browse), article detail, Firebase
+  sign-in, favorite/library, tracker refresh, email alert, and threaded
+  comments against the hosted deployment.
+- [ ] Add the deployed domain to Firebase Auth authorized domains if sign-in
+  is used outside `localhost`/current domains.
+- [ ] Review Vercel, Neon, and Resend logs/usage after deployment.
