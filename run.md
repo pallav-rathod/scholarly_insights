@@ -154,8 +154,10 @@ python -m app.refresh_trackers
 ```
 
 No scheduler is configured by this command. To refresh nightly, provision an
-external scheduler after deployment and monitor its logs. Alerts are in-app;
-email delivery is not implemented.
+external scheduler after deployment and monitor its logs. Alerts are stored in-app. When `SMTP_HOST` (and optionally `SMTP_PORT`,
+`SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM`, `PUBLIC_BASE_URL`) are
+configured, each refresh also emails the tracker owner about newly created
+alerts only; without `SMTP_HOST`, email delivery is skipped.
 
 ## 5. Production hosting architecture and status
 

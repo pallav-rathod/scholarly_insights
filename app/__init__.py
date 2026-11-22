@@ -34,6 +34,12 @@ def create_app(test_config: dict | None = None) -> Flask:
         ),
         ARXIV_MIN_INTERVAL=float(os.environ.get("ARXIV_MIN_INTERVAL", "3")),
         ARXIV_CACHE_TTL=int(os.environ.get("ARXIV_CACHE_TTL", str(24 * 60 * 60))),
+        SMTP_HOST=os.environ.get("SMTP_HOST", ""),
+        SMTP_PORT=int(os.environ.get("SMTP_PORT", "587")),
+        SMTP_USERNAME=os.environ.get("SMTP_USERNAME", ""),
+        SMTP_PASSWORD=os.environ.get("SMTP_PASSWORD", ""),
+        EMAIL_FROM=os.environ.get("EMAIL_FROM", ""),
+        PUBLIC_BASE_URL=os.environ.get("PUBLIC_BASE_URL", ""),
     )
     if test_config:
         app.config.update(test_config)

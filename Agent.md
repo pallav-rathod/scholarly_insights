@@ -159,8 +159,9 @@ current source and tests before making completion claims. Key caveats include:
 - Search, article pages, reading history, and threaded comments are present.
 - User accounts require working Firebase client configuration and server-side
   Admin credentials; tests use a fake Firebase verifier.
-- Trackers and alerts exist, but refresh is manual or externally scheduled;
-  email delivery and an installed nightly scheduler are absent.
+- Trackers and alerts exist, but refresh is manual or externally scheduled.
+  Optional SMTP email alerts (`SMTP_HOST` etc.) are sent for newly created
+  notifications only; an installed nightly scheduler is absent.
 - Search/browse has text category filters, not a category catalog or trie-based
   autocomplete. There is no JSON article-details endpoint.
 - Related-paper ranking uses TF-IDF-style text similarity and a category
